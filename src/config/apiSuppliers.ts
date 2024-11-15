@@ -1,0 +1,5 @@
+export const apiEndpoints: { [key: string]: string } = {
+    acme: 'https://5f2be0b4ffc88500167b85a0.mockapi.io/suppliers/acme',
+    patagonia: 'https://5f2be0b4ffc88500167b85a0.mockapi.io/suppliers/patagonia',
+    paperflies: 'https://5f2be0b4ffc88500167b85a0.mockapi.io/suppliers/paperflies'
+}

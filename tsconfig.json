@@ -1,0 +1,27 @@
+{
+	"include": ["src/**/*", "package.json"],
+	"compilerOptions": {
+			"composite": true,
+			"declaration": true,
+			"declarationMap": true,
+			"esModuleInterop": true,
+			"forceConsistentCasingInFileNames": true,
+			"importHelpers": true,
+			"module": "ESNext",
+			"moduleResolution": "node",
+			"newLine": "LF",
+			"noFallthroughCasesInSwitch": true,
+			"noImplicitReturns": true,
+			"noUncheckedIndexedAccess": true,
+			"noUnusedLocals": false,
+			"noUnusedParameters": false,
+			"preserveConstEnums": true,
+			"removeComments": true,
+			"resolveJsonModule": true,
+			"strict": false,
+			"target": "ES2018",
+			"outDir": "dist",
+			"rootDir": "src",
+	},
+	"exclude": ["node_modules"]
+}

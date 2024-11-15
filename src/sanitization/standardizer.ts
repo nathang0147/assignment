@@ -15,6 +15,7 @@ export function standardizeData(rawData: RawHotelData[]): StandardizedHotelData[
     standardizedData.name = mapField(data, keyMapping.name) as string;
     standardizedData.lat = mapField(data, keyMapping.lat) as number;
     standardizedData.lng = mapField(data, keyMapping.lng) as number;
+    standardizedData.trust =  data.trust
 
     // Address and postal code are handled separately
     standardizedData.address = standardizeAddress(data);

@@ -2,5 +2,5 @@ import {Hotel} from "../../models/Hotel";
 import {StandardizedHotelData} from "../../models/Hotel";
 
 export interface MergeStrategy{
-  merge(hotels: StandardizedHotelData[]): any;
+  merge(existing: any, incoming:any): any;
 }

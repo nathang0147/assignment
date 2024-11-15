@@ -26,6 +26,7 @@ export interface StandardizedHotelData {
   id: string;
   destinationId: number;
   name: string;
+  trust: number,
   lat: number;
   lng: number;
   address: string;

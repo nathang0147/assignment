@@ -1,38 +1,87 @@
-import { MergeStrategy } from "../strategies/interface/MergeStrategy";
-import { DescriptionMergeStrategy } from "../strategies/LongestDescriptionStrategy";
-import { ImageSelectionStrategy } from "../strategies/ImageSelectionStrategy";
-import { LocationMergeStrategy } from "../strategies/LocationMergeStrategy";
-import { AmenitiesMergeStrategy } from "../strategies/AmenitiesMergeStrategy";
-import {BookingConditionMergeStrategy} from "../strategies/BookingConditionMergeStrategy";
-import { StandardizedHotelData } from "../models/Hotel";
+import {MergeStrategy} from "../strategies/interface/MergeStrategy";
+import {ObjectArrayStrategy} from "../strategies/ObjectArray.strategy";
+import {UniqueArrayStrategy} from "../strategies/UniqueArray.strategy";
+import {LongestStringInArrayStrategy} from "../strategies/LongestStringInArray.strategy";
+import {StandardizedHotelData} from "../models/Hotel";
+import {LongestStringStrategy} from "../strategies/LongestString.strategy";
 
-  export class MergeService {
+class MergeService {
+    private static instance: MergeService;
+
     private strategies: Record<string, MergeStrategy> = {
-      description: new DescriptionMergeStrategy(),
-      location: new LocationMergeStrategy(),
-      amenities: new AmenitiesMergeStrategy(),
-      images: new ImageSelectionStrategy(),
-      bookingConditions: new BookingConditionMergeStrategy(),
+        name: new LongestStringStrategy(),
+        lat: new LongestStringStrategy(),
+        lng: new LongestStringStrategy(),
+        address: new LongestStringStrategy(),
+        city: new LongestStringStrategy(),
+        country: new LongestStringStrategy(),
+        postalCode: new LongestStringStrategy(),
+        description: new LongestStringStrategy(),
+        roomAmenities: new UniqueArrayStrategy(),
+        generalAmenities: new UniqueArrayStrategy(),
+        roomImages: new ObjectArrayStrategy(),
+        siteImages: new ObjectArrayStrategy(),
+        amenitiesImages: new ObjectArrayStrategy(),
+        booking_conditions: new LongestStringInArrayStrategy(),
     };
 
-    merge(hotels: StandardizedHotelData[]): StandardizedHotelData { 
-      return {
-        id: hotels[0].id,
-        destinationId: hotels[0].destinationId,
-        name: hotels[0].name,
-        lat: hotels[0].lat,
-        lng: hotels[0].lng,
-        address: this.strategies.location.merge(hotels),
-        city: hotels[0].city,
-        country: hotels[0].country,
-        postalCode: hotels[0].postalCode,
-        description: this.strategies.description.merge(hotels),
-        generalAmenities: this.strategies.amenities.merge(hotels).general,
-        roomAmenities: this.strategies.amenities.merge(hotels).room,
-        roomImages: this.strategies.images.merge(hotels).roomImages,
-        siteImages: this.strategies.images.merge(hotels).siteImages,
-        amenitiesImages: this.strategies.images.merge(hotels).amenitiesImages,
-        booking_conditions: this.strategies.bookingConditions.merge(hotels),
-      };
+    private constructor() {}
+
+    public static getInstance(): MergeService {
+        if (!MergeService.instance) {
+            MergeService.instance = new MergeService();
+        }
+        return MergeService.instance;
     }
-  }
+
+    public mergeData(hotels: StandardizedHotelData[]): StandardizedHotelData[] {
+        const idMap: { [id: string]: StandardizedHotelData } = {};
+
+        hotels.forEach(hotel => {
+            const id = hotel.id;
+            if (!idMap[id]) {
+                idMap[id] = { ...hotel };
+            } else {
+                const existing = idMap[id];
+
+                Object.keys(hotel).forEach(key => {
+                    if (!existing[key as keyof StandardizedHotelData]) {
+                        // Initialize missing property in existing object
+                        existing[key] = hotel[key as keyof StandardizedHotelData];
+                    } else {
+                        const strategy = this.strategies[key];
+                        if (strategy) {
+                            // Apply the strategy's merge method
+                            existing[key] = strategy.merge(
+                                existing[key],
+                                hotel[key]
+                            );
+                        }
+                    }
+                });
+                // Ensure roomAmenities do not exist in generalAmenities
+                existing.roomAmenities = existing.roomAmenities.filter(
+                    (item: string) => !existing.generalAmenities.includes(item)
+                );
+
+                // Sort images by description's first letter and link order
+                const sortImages = (images: { link: string; description: string }[]) => {
+                    if (!Array.isArray(images)) return [];
+                    return images.sort((a, b) => {
+                        const numA = parseInt(a.link.match(/\/(\d+)_m\.jpg$/)?.[1] || '0', 10);
+                        const numB = parseInt(b.link.match(/\/(\d+)_m\.jpg$/)?.[1] || '0', 10);
+                        return numA - numB;
+                    });
+                };
+
+                existing.roomImages = sortImages(existing.roomImages);
+                existing.siteImages = sortImages(existing.siteImages);
+                existing.amenitiesImages = sortImages(existing.amenitiesImages);
+            }
+        });
+
+        return Object.values(idMap);
+    }
+}
+
+export const mergeService = MergeService.getInstance();

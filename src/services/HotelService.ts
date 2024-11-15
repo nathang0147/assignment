@@ -1,31 +1,32 @@
 import { Hotel, StandardizedHotelData } from "../models/Hotel";
 import { SupplierService } from "./SupplierService";
-import {normalizeData} from "../utils/normalizer"
-import {MergeService} from './MergeService';
+import {normalizeData} from "../sanitization/normalizer"
+import {mergeService} from "./MergeService";
+import {filterHotels} from "../utils/common.function";
+
 
 export class HotelDataService {
   private supplierService: SupplierService;
-  private mergeService: MergeService;
+
 
   constructor() {
     this.supplierService = new SupplierService();
-    this.mergeService = new MergeService();
   }
   
-  async getMergeHotels(hotelIds: string[], destinationIds: string[]): Promise<any[]> {
+  async getMergeHotels(hotelIds: string[] | null, destinationIds: string[] | null): Promise<any[]> {
     const rawData = await this.supplierService.fetchAndStandardize();
-    
-    const filteredData = rawData.filter((hotel) => hotelIds.some(a => a === hotel.id));
-
-    console.log('Filtered Data:', filteredData); // Log the final filtered result
-
+    let filteredData: StandardizedHotelData[];
+    if(!hotelIds && !destinationIds) {
+      filteredData = rawData;
+    }else {
+      filteredData = filterHotels(rawData, hotelIds, destinationIds);
+    }
 
     const normalizedData = normalizeData(filteredData);
-    // const mergedHotels = normalizedData.map((hotelData) => this.mergeService.merge([hotelData]));
 
-    // return mergedHotels.map((mergedHotel) =>this.formatResultJson(mergedHotel));
-    // console.log(normalizedData)
-    return normalizedData
+    const mergedHotels = mergeService.mergeData(normalizedData);
+
+    return mergedHotels.map((mergedHotel) =>this.formatResultJson(mergedHotel));
   }
 
   private formatResultJson(mergedData: StandardizedHotelData): Hotel {
